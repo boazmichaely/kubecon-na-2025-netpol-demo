@@ -2,6 +2,14 @@
 { set +x; } 2>/dev/null
 clear
 
+# Color definitions
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m' # No Color
+
 # Helper function to bring Chrome to front
 # Usage: pop_chrome ["window title substring"]
 pop_chrome() {
@@ -61,6 +69,10 @@ EOF
 if [ -f ../NETPOL/network-policies.yaml ]; then
     oc delete -f ../NETPOL/network-policies.yaml  2>/dev/null
 fi
+if [ -f ../NETPOL/ANP-add-monitoring-with-ports-to-all-NS.yaml ]; then
+    oc delete -f ../NETPOL/ANP-add-monitoring-with-ports-to-all-NS.yaml  2>/dev/null
+fi
+
 rm -f ../NETPOL/*.yaml
 rm -f ../DOT/connectivity-map.dot
 rm -f ../DOT/frontend-connectivity-map.dot
@@ -69,7 +81,7 @@ rm -f ../DOT/explain.md
 cat <<EOF
 
 ####################################################################
-# DEMO 1 - Generate Network Policies and visualize connectivity
+# Use Case 1 - Generate Network Policies and visualize connectivity
 ####################################################################
 EOF
 read -n 1 -s -p "Show the Online Boutique application ..."
@@ -79,7 +91,8 @@ echo
 echo
 read -n 1 -s -p "======  Step 1: Generate network policies ! ======"
 echo
-
+echo
+echo -e "${CYAN}${BOLD}▶ Generating network policies with roxctl...${NC}"
 set -x
 roxctl netpol generate --dnsport 5353 . --remove -f ../NETPOL/network-policies.yaml
 { set +x; } 2>/dev/null
@@ -95,11 +108,32 @@ echo
 read -n 1 -s -p "show generated  policies in slide ..."
 echo
 pop_chrome "Demonstration of Automatic Kubernetes Network Policies"
+read -n 1 -s -p "Test connectivity before applying network policies ..."
+echo
+PAYMENT_IP=$(oc get svc -n ms-demo paymentservice -o jsonpath='{.spec.clusterIP}')
+echo "Paymentservice IP: $PAYMENT_IP"
+echo
+set -x
+oc exec -n ms-demo deployment/adservice -- sh -c "nc -zv -w 3 $PAYMENT_IP 50051"
+{ set +x; } 2>/dev/null
+echo
+echo -e "${GREEN}✓ Connection is ALLOWED (no network policies enforced yet)${NC}"
+echo
 read -n 1 -s -p "Apply network policies to cluster ..."
 echo
 set -x
 oc apply -f  ../NETPOL/network-policies.yaml
 { set +x; } 2>/dev/null
+echo
+read -n 1 -s -p "Test connectivity after applying network policies ..."
+echo
+echo "Testing with same IP: $PAYMENT_IP"
+echo
+set -x
+oc exec -n ms-demo deployment/adservice -- sh -c "nc -zv -w 3 $PAYMENT_IP 50051"
+{ set +x; } 2>/dev/null || true
+echo
+echo -e "${RED}✗ Connection is BLOCKED (network policies enforcing least privilege!)${NC}"
 echo
 read -n 1 -s -p "Show network policies in OCP console ..."
 echo
@@ -110,6 +144,8 @@ echo
 echo
 read -n 1 -s -p "======  Step 2: Generate explicit connectivity map ! ======"
 echo
+echo
+echo -e "${CYAN}${BOLD}▶ Generating connectivity map with roxctl...${NC}"
 set -x
 roxctl netpol connectivity map .. -o dot -f ../DOT/connectivity-map.dot >/dev/null 
 { set +x; } 2>/dev/null
@@ -119,17 +155,17 @@ read -n 1 -s -p "Show connectivity map ... "
 xdot -g 1400x900 ../DOT/connectivity-map.dot >/dev/null 2>&1  &
 echo
 
-read -n 1 -s -p "on to Demo 2 ... "
+read -n 1 -s -p "on to Use Case 2 ... "
 echo
+pop_chrome "Demonstration of Automatic Kubernetes Network Policies"
+
 clear
 
 cat <<EOF
 ########################################################
-# DEMO 2 - How tight are the network policies? 
+# Use Case 2 - How tight are the network policies? 
 ########################################################
 EOF
-echo
-read -n 1 -s -p "======  Step 3: Analyze exposure with focus on frontend ======"
 echo
 read -n 1 -s -p  "First, let's allow monitoring using ANP"
 echo
@@ -141,7 +177,10 @@ oc apply -f ../NETPOL/ANP-add-monitoring-with-ports-to-all-NS.yaml
 read -n 1 -s -p  "See ANP in OpenShift Console"
 echo
 pop_chrome "adminnetworkpolicies"
-
+read -n 1 -s -p "======  Step 3: Analyze exposure with focus on frontend ======"
+echo
+echo
+echo -e "${CYAN}${BOLD}▶ Analyzing exposure with roxctl...${NC}"
 set -x
 roxctl netpol connectivity map .. --focus-workload frontend --exposure  -o dot -f ../DOT/frontend-connectivity-map.dot --remove >/dev/null 
 { set +x; } 2>/dev/null
@@ -160,17 +199,20 @@ read -n 1 -s -p "Show connectivity map ... "
 xdot -g 1400x900 ../DOT/frontend-connectivity-map.dot  >/dev/null 2>&1 &
 echo
 
-read -n 1 -s -p "on to Demo 3 ... "
+read -n 1 -s -p "on to Use Case 3 ... "
 echo
+pop_chrome "Demonstration of Automatic Kubernetes Network Policies"
+
 clear
 cat <<EOF
 ########################################################
-# DEMO 3 - Why are my apps not talking nor over exposed?
+# Use Case 3 - Why are my apps not talking nor over exposed?
 ########################################################
 EOF
 read -n 1 -s -p "======  Step 4: Explain connectivity for frontend ======"
 echo
-
+echo
+echo -e "${CYAN}${BOLD}▶ Generating connectivity explanation with roxctl...${NC}"
 set -x
 roxctl netpol connectivity map .. --focus-workload frontend --explain > ../DOT/explain.md
 { set +x; } 2>/dev/null
@@ -178,7 +220,18 @@ echo
 read -n 1 -s -p "Show connectivity explanation ... "
 less ../DOT/explain.md
 echo
+read -n 1 -s -p "With a littel help from Cursor (CMD ^ V) "
+echo
+open ../DOT/05-frontend-connectivity-summary.md
 echo
 read -n 1 -s -p "Back to slides ... "
 pop_chrome "Google Slides"
 echo
+read -n 1 -s -p "End of Demo 3 ... "
+echo
+clear
+cat <<EOF
+########################################################
+# DEMO 4 - Diff between network policies in two different folders
+########################################################
+EOF
