@@ -8,7 +8,21 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 BOLD='\033[1m'
+WHITE='\033[1;37m'
+HIGHLIGHT='\033[43m\033[30m'   # Yellow background, black text (marker effect)
 NC='\033[0m' # No Color
+
+# Highlight definitions for different types of output
+HL_SHOW="${BOLD}${YELLOW}"    # Important prompts before roxctl commands
+HL_RUN="${YELLOW}"             # Other command line runs (rarely used)
+
+# PS4 prompt definitions for traced commands (set -x)
+PS4_DEFAULT=$'\e[1;93m▶▶▶ \e[0m'              # Yellow arrows (default for most commands)
+PS4_ROX=$'\e[1;93m▶▶▶ \e[0m\e[1m\e[7m'       # Yellow arrows, reset, then inverse for command (terminal auto-resets after newline)
+PS4_PLAIN='+ '                                 # Plain prompt (no highlight)
+
+# Set default PS4
+export PS4="$PS4_DEFAULT"
 
 # Helper function to bring Chrome to front
 # Usage: pop_chrome ["window title substring"]
@@ -92,10 +106,12 @@ echo
 read -n 1 -s -p "======  Step 1: Generate network policies ! ======"
 echo
 echo
-echo -e "${CYAN}${BOLD}▶ Generating network policies with roxctl...${NC}"
+echo -e "${HL_SHOW}▶ Generating network policies with roxctl..."
+export PS4="$PS4_ROX"
 set -x
 roxctl netpol generate --dnsport 5353 . --remove -f ../NETPOL/network-policies.yaml
 { set +x; } 2>/dev/null
+export PS4="$PS4_DEFAULT"
 echo
 read -n 1 -s -p "view the generated network policies ..."
 less ../NETPOL/network-policies.yaml
@@ -108,16 +124,19 @@ echo
 read -n 1 -s -p "show generated  policies in slide ..."
 echo
 pop_chrome "Demonstration of Automatic Kubernetes Network Policies"
-read -n 1 -s -p "Test connectivity before applying network policies ..."
+echo
+read -n 1 -s -p "Test IP connectivity before applying network policies ..."
 echo
 PAYMENT_IP=$(oc get svc -n ms-demo paymentservice -o jsonpath='{.spec.clusterIP}')
-echo "Paymentservice IP: $PAYMENT_IP"
+echo -e "${HL_SHOW}FROM: adservice TO: Paymentservice IP: $PAYMENT_IP${NC}"
 echo
 set -x
 oc exec -n ms-demo deployment/adservice -- sh -c "nc -zv -w 3 $PAYMENT_IP 50051"
 { set +x; } 2>/dev/null
 echo
-echo -e "${GREEN}✓ Connection is ALLOWED (no network policies enforced yet)${NC}"
+echo -e "${BOLD}${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}${GREEN}✓ Connection is ALLOWED${NC}"
+echo -e "${BOLD}${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo
 read -n 1 -s -p "Apply network policies to cluster ..."
 echo
@@ -125,15 +144,16 @@ set -x
 oc apply -f  ../NETPOL/network-policies.yaml
 { set +x; } 2>/dev/null
 echo
-read -n 1 -s -p "Test connectivity after applying network policies ..."
 echo
-echo "Testing with same IP: $PAYMENT_IP"
+read -n 1 -s -p "Test IP connectivity after applying network policies ..."
 echo
 set -x
 oc exec -n ms-demo deployment/adservice -- sh -c "nc -zv -w 3 $PAYMENT_IP 50051"
 { set +x; } 2>/dev/null || true
 echo
-echo -e "${RED}✗ Connection is BLOCKED (network policies enforcing least privilege!)${NC}"
+echo -e "${BOLD}${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}${RED}✗ Connection is BLOCKED${NC}"
+echo -e "${BOLD}${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo
 read -n 1 -s -p "Show network policies in OCP console ..."
 echo
@@ -145,10 +165,12 @@ echo
 read -n 1 -s -p "======  Step 2: Generate explicit connectivity map ! ======"
 echo
 echo
-echo -e "${CYAN}${BOLD}▶ Generating connectivity map with roxctl...${NC}"
+echo -e "${HL_SHOW}▶ Generating connectivity map with roxctl...${NC}"
+export PS4="$PS4_ROX"
 set -x
 roxctl netpol connectivity map .. -o dot -f ../DOT/connectivity-map.dot >/dev/null 
 { set +x; } 2>/dev/null
+export PS4="$PS4_DEFAULT"
 sed -i '' 's/="gold2"/="#00FF00"/g' ../DOT/connectivity-map.dot
 echo
 read -n 1 -s -p "Show connectivity map ... "
@@ -180,10 +202,12 @@ pop_chrome "adminnetworkpolicies"
 read -n 1 -s -p "======  Step 3: Analyze exposure with focus on frontend ======"
 echo
 echo
-echo -e "${CYAN}${BOLD}▶ Analyzing exposure with roxctl...${NC}"
+echo -e "${HL_SHOW}▶ Analyzing exposure with roxctl...${NC}"
+export PS4="$PS4_ROX"
 set -x
 roxctl netpol connectivity map .. --focus-workload frontend --exposure  -o dot -f ../DOT/frontend-connectivity-map.dot --remove >/dev/null 
 { set +x; } 2>/dev/null
+export PS4="$PS4_DEFAULT"
 # we need to make some tweaks to the dot file to make it more readable, this is particular for this demo.
 # STEP 1: Specific adjustments (BEFORE color replacements)
 sed -i '' 's/label="TCP 8080,8443,9090" color="darkorange2" fontcolor="darkgreen" weight=1/label="TCP 8080,8443,9090" color="darkorange2" fontcolor="darkgreen" weight=2.0/g' ../DOT/frontend-connectivity-map.dot
@@ -212,10 +236,12 @@ EOF
 read -n 1 -s -p "======  Step 4: Explain connectivity for frontend ======"
 echo
 echo
-echo -e "${CYAN}${BOLD}▶ Generating connectivity explanation with roxctl...${NC}"
+echo -e "${HL_SHOW}▶ Generating connectivity explanation with roxctl...${NC}"
+export PS4="$PS4_ROX"
 set -x
 roxctl netpol connectivity map .. --focus-workload frontend --explain > ../DOT/explain.md
 { set +x; } 2>/dev/null
+export PS4="$PS4_DEFAULT"
 echo
 read -n 1 -s -p "Show connectivity explanation ... "
 less ../DOT/explain.md

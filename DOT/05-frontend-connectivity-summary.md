@@ -1,6 +1,6 @@
 # Frontend Connectivity Analysis
 
-## EGRESS from Frontend (Where frontend can connect TO)
+## Connections from Frontend 
 
 | Destination | Allowed | Denied | Policy Reference |
 |-------------|---------|--------|------------------|
@@ -19,7 +19,7 @@
 
 ---
 
-## INGRESS to Frontend (Who can connect TO frontend)
+## Connections to Frontend 
 
 | Source | Allowed | Denied | Policy Reference |
 |--------|---------|--------|------------------|
