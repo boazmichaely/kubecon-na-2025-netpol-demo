@@ -1,15 +1,24 @@
-# Network Policy Demo with roxctl
+# Kubernetes Network Policy Toolkit Demo using roxctl (based on NP-Guard)
 
 Enhanced demonstration of automated Kubernetes network policy generation and analysis using Red Hat Advanced Cluster Security (RHACS) `roxctl` tool.
 
 ## Overview
 
-This demo showcases:
-- **Automated network policy generation** from live Kubernetes deployments
-- **Zero-trust enforcement** - demonstrating blocked connectivity after policies are applied
-- **Network connectivity visualization** using DOT graphs
-- **Exposure analysis** focused on specific workloads
-- **Explainability** - detailed connectivity reports for troubleshooting
+This demo showcases the `roxctl netpol` features:
+Network Policy Generation
+- Default-deny on namespace
+- Tight connections for listed workloads
+- Implied need for DNS, only when needed!  (+ control DNS port)
+Connectivity Analysis (static)
+- Connectivity map: concrete connections for listed workloads
+- Exposure option: allowed connections beyond listed workloads
+- Visualization formats: txt, json, md, dot, csv
+- Focus option: limit the analysis to a particular workload
+Advanced analysis
+- Explain the rule stack leading to connection allowed or denied (txt only)
+- Diff: 	Visualize differences in connectivity between two project versions
+  - Considers both workloads and network policies
+  - Formats: txt, md, csv, dot
 
 ## Architecture
 
