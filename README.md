@@ -33,11 +33,8 @@ Based on [mostmark's fork of the Online Boutique microservices demo](https://git
 
 ### Tools Required
 - **roxctl** - Red Hat Advanced Cluster Security CLI
-#### Option 1: Download from your RHACS Central instance
-  
-#### Option 2: Build from source
-
-https://github.com/stackrox/stackrox
+  - **Option 1:** Download from your RHACS Central instance
+  - **Option 2:** Build from source: https://github.com/stackrox/stackrox
 
 - A GraphViz DOT file viewer. There are great VScode plugins. You may also try xdot 
   ```bash
