@@ -14,15 +14,6 @@ NC='\033[0m' # No Color
 
 # Highlight definitions for different types of output
 HL_SHOW="${BOLD}${YELLOW}"    # Important prompts before roxctl commands
-HL_RUN="${YELLOW}"             # Other command line runs (rarely used)
-
-# PS4 prompt definitions for traced commands (set -x)
-PS4_DEFAULT=$'\e[1;93m▶▶▶ \e[0m'              # Yellow arrows (default for most commands)
-PS4_ROX=$'\e[1;93m▶▶▶ \e[0m\e[1m\e[7m'       # Yellow arrows, reset, then inverse for command (terminal auto-resets after newline)
-PS4_PLAIN='+ '                                 # Plain prompt (no highlight)
-
-# Set default PS4
-export PS4="$PS4_DEFAULT"
 
 # Helper function to bring Chrome to front
 # Usage: pop_chrome ["window title substring"]
@@ -46,6 +37,44 @@ tell application "Google Chrome"
 end tell
 EOF
     fi
+}
+
+# demo_launch - displays and runs commands with inverse video highlighting
+# Usage: demo_launch [-o output_file] command [args...]
+demo_launch() {
+    local output_file=""
+    
+    # Check for -o or --output flag
+    if [[ "$1" == "-o" ]] || [[ "$1" == "--output" ]]; then
+        output_file="$2"
+        shift 2
+    fi
+    
+    # Print command display to stderr (always visible)
+    echo -e "\e[1;93m▶▶▶\e[0m \e[1m\e[7m$*\e[0m" >&2
+    
+    # Execute with or without output redirection
+    if [[ -n "$output_file" ]]; then
+        "$@" > "$output_file"
+    else
+        "$@"
+    fi
+    
+    # Reset formatting (to stderr)
+    echo -e '\e[0m' >&2
+}
+
+# demo_show - displays highlighted text
+# Usage: demo_show "message"
+demo_show() {
+    echo -e "${HL_SHOW}$*${NC}"
+}
+
+# demo_prompt - interactive prompt that waits for keypress
+# Usage: demo_prompt "prompt text"
+demo_prompt() {
+    read -n 1 -s -p "$*"
+    echo
 }
 
 #
@@ -90,7 +119,7 @@ fi
 rm -f ../NETPOL/*.yaml
 rm -f ../DOT/connectivity-map.dot
 rm -f ../DOT/frontend-connectivity-map.dot
-rm -f ../DOT/explain.md
+rm -f ../DOT/explain.txt
 
 cat <<EOF
 
@@ -98,22 +127,16 @@ cat <<EOF
 # Use Case 1 - Generate Network Policies and visualize connectivity
 ####################################################################
 EOF
-read -n 1 -s -p "Show the Online Boutique application ..."
+demo_prompt "Show the Online Boutique application ..."
 pop_chrome "Online Boutique"
-echo
 
 echo
-read -n 1 -s -p "======  Step 1: Generate network policies ! ======"
+demo_prompt "======  Step 1: Generate network policies ! ======"
 echo
+demo_show "▶ Generating network policies with roxctl..."
+demo_launch roxctl netpol generate --dnsport 5353 . --remove -f ../NETPOL/network-policies.yaml
 echo
-echo -e "${HL_SHOW}▶ Generating network policies with roxctl..."
-export PS4="$PS4_ROX"
-set -x
-roxctl netpol generate --dnsport 5353 . --remove -f ../NETPOL/network-policies.yaml
-{ set +x; } 2>/dev/null
-export PS4="$PS4_DEFAULT"
-echo
-read -n 1 -s -p "view the generated network policies ..."
+demo_prompt "view the generated network policies ..."
 less ../NETPOL/network-policies.yaml
 ## DO show the network policies (less ../NETPOL/network-policies.yaml)
 #  SAY call out 
@@ -121,63 +144,51 @@ less ../NETPOL/network-policies.yaml
 # 2. match egress with ingress
 # 3. opened  dns ports 
 echo
-read -n 1 -s -p "show generated  policies in slide ..."
+demo_prompt "show generated  policies in slide ..."
 echo
 pop_chrome "Demonstration of Automatic Kubernetes Network Policies"
 echo
-read -n 1 -s -p "Test IP connectivity before applying network policies ..."
+demo_prompt "Test IP connectivity before applying network policies ..."
 echo
 PAYMENT_IP=$(oc get svc -n ms-demo paymentservice -o jsonpath='{.spec.clusterIP}')
-echo -e "${HL_SHOW}FROM: adservice TO: Paymentservice IP: $PAYMENT_IP${NC}"
+demo_show "FROM: adservice TO: Paymentservice IP: $PAYMENT_IP"
 echo
-set -x
-oc exec -n ms-demo deployment/adservice -- sh -c "nc -zv -w 3 $PAYMENT_IP 50051"
-{ set +x; } 2>/dev/null
-echo
+demo_launch oc exec -n ms-demo deployment/adservice -- sh -c "nc -zv -w 3 $PAYMENT_IP 50051"
 echo -e "${BOLD}${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${BOLD}${GREEN}✓ Connection is ALLOWED${NC}"
 echo -e "${BOLD}${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo
-read -n 1 -s -p "Apply network policies to cluster ..."
+demo_prompt "Apply network policies to cluster ..."
 echo
-set -x
-oc apply -f  ../NETPOL/network-policies.yaml
-{ set +x; } 2>/dev/null
+demo_launch oc apply -f  ../NETPOL/network-policies.yaml
 echo
+demo_prompt "Test IP connectivity after applying network policies ..."
 echo
-read -n 1 -s -p "Test IP connectivity after applying network policies ..."
-echo
-set -x
-oc exec -n ms-demo deployment/adservice -- sh -c "nc -zv -w 3 $PAYMENT_IP 50051"
-{ set +x; } 2>/dev/null || true
+demo_launch oc exec -n ms-demo deployment/adservice -- sh -c "nc -zv -w 3 $PAYMENT_IP 50051"
 echo
 echo -e "${BOLD}${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${BOLD}${RED}✗ Connection is BLOCKED${NC}"
 echo -e "${BOLD}${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo
-read -n 1 -s -p "Show network policies in OCP console ..."
+demo_prompt "Show network policies in OCP console ..."
 echo
 pop_chrome "NetworkPolicies"
 read -n 1 -s -p 'Show the app still works :-) '
 pop_chrome "Online Boutique"
 echo
 echo
-read -n 1 -s -p "======  Step 2: Generate explicit connectivity map ! ======"
+demo_prompt "======  Step 2: Generate explicit connectivity map ! ======"
 echo
 echo
-echo -e "${HL_SHOW}▶ Generating connectivity map with roxctl...${NC}"
-export PS4="$PS4_ROX"
-set -x
-roxctl netpol connectivity map .. -o dot -f ../DOT/connectivity-map.dot >/dev/null 
-{ set +x; } 2>/dev/null
-export PS4="$PS4_DEFAULT"
+demo_show "▶ Generating connectivity map with roxctl..."
+demo_launch -o /dev/null roxctl netpol connectivity map .. -o dot -f ../DOT/connectivity-map.dot
 sed -i '' 's/="gold2"/="#00FF00"/g' ../DOT/connectivity-map.dot
 echo
-read -n 1 -s -p "Show connectivity map ... "
+demo_prompt "Show connectivity map ... "
 xdot -g 1400x900 ../DOT/connectivity-map.dot >/dev/null 2>&1  &
 echo
 
-read -n 1 -s -p "on to Use Case 2 ... "
+demo_prompt "on to Use Case 2 ... "
 echo
 pop_chrome "Demonstration of Automatic Kubernetes Network Policies"
 
@@ -193,21 +204,17 @@ read -n 1 -s -p  "First, let's allow monitoring using ANP"
 echo
 cp ../NETPOL/01-ANP-add-monitoring-with-ports-to-all-NS.txt ../NETPOL/ANP-add-monitoring-with-ports-to-all-NS.yaml  
 less ../NETPOL/ANP-add-monitoring-with-ports-to-all-NS.yaml
-read -n 1 -s -p  "oc apply ..."
+demo_prompt   " apply the AdminNetworkPolicy ..."
 echo
-oc apply -f ../NETPOL/ANP-add-monitoring-with-ports-to-all-NS.yaml
-read -n 1 -s -p  "See ANP in OpenShift Console"
+demo_launch oc apply -f ../NETPOL/ANP-add-monitoring-with-ports-to-all-NS.yaml
+demo_prompt "See ANP in OpenShift Console"
 echo
 pop_chrome "adminnetworkpolicies"
-read -n 1 -s -p "======  Step 3: Analyze exposure with focus on frontend ======"
+demo_prompt "======  Step 3: Analyze exposure with focus on frontend ======"
 echo
 echo
-echo -e "${HL_SHOW}▶ Analyzing exposure with roxctl...${NC}"
-export PS4="$PS4_ROX"
-set -x
-roxctl netpol connectivity map .. --focus-workload frontend --exposure  -o dot -f ../DOT/frontend-connectivity-map.dot --remove >/dev/null 
-{ set +x; } 2>/dev/null
-export PS4="$PS4_DEFAULT"
+demo_show "▶ Analyzing exposure with roxctl..."
+demo_launch -o /dev/null roxctl netpol connectivity map .. --focus-workload frontend --exposure  -o dot -f ../DOT/frontend-connectivity-map.dot --remove
 # we need to make some tweaks to the dot file to make it more readable, this is particular for this demo.
 # STEP 1: Specific adjustments (BEFORE color replacements)
 sed -i '' 's/label="TCP 8080,8443,9090" color="darkorange2" fontcolor="darkgreen" weight=1/label="TCP 8080,8443,9090" color="darkorange2" fontcolor="darkgreen" weight=2.0/g' ../DOT/frontend-connectivity-map.dot
@@ -219,11 +226,11 @@ sed -i '' 's/="green"/="#00FF00"/g' ../DOT/frontend-connectivity-map.dot
 sed -i '' 's/="gold2"/="#00FF00"/g' ../DOT/frontend-connectivity-map.dot
 sed -i '' 's/="darkorange2"/="#FF0000"/g' ../DOT/frontend-connectivity-map.dot
 echo
-read -n 1 -s -p "Show connectivity map ... "
+demo_prompt "Show connectivity map ... "
 xdot -g 1400x900 ../DOT/frontend-connectivity-map.dot  >/dev/null 2>&1 &
 echo
 
-read -n 1 -s -p "on to Use Case 3 ... "
+demo_prompt "on to Use Case 3 ... "
 echo
 pop_chrome "Demonstration of Automatic Kubernetes Network Policies"
 
@@ -233,27 +240,22 @@ cat <<EOF
 # Use Case 3 - Why are my apps not talking nor over exposed?
 ########################################################
 EOF
-read -n 1 -s -p "======  Step 4: Explain connectivity for frontend ======"
+demo_prompt "======  Step 4: Explain connectivity for frontend ======"
 echo
+demo_show "▶ Generating connectivity explanation with roxctl..."
+demo_launch -o ../DOT/explain.txt roxctl netpol connectivity map .. --focus-workload frontend --explain
 echo
-echo -e "${HL_SHOW}▶ Generating connectivity explanation with roxctl...${NC}"
-export PS4="$PS4_ROX"
-set -x
-roxctl netpol connectivity map .. --focus-workload frontend --explain > ../DOT/explain.md
-{ set +x; } 2>/dev/null
-export PS4="$PS4_DEFAULT"
+demo_prompt "Show connectivity explanation ... "
+less -S ../DOT/explain.txt
 echo
-read -n 1 -s -p "Show connectivity explanation ... "
-less ../DOT/explain.md
-echo
-read -n 1 -s -p "With a littel help from Cursor (CMD ^ V) "
+demo_prompt "With a littel help from Cursor (CMD ^ V) "
 echo
 open ../DOT/05-frontend-connectivity-summary.md
 echo
-read -n 1 -s -p "Back to slides ... "
+demo_prompt "Back to slides ... "
 pop_chrome "Google Slides"
 echo
-read -n 1 -s -p "End of Demo 3 ... "
+demo_prompt "End of Demo 3 ... "
 echo
 clear
 cat <<EOF
