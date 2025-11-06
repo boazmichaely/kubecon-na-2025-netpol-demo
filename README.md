@@ -13,15 +13,19 @@ This demo showcases:
 
 ## Architecture
 
-Based on Google's [Online Boutique microservices demo](https://github.com/GoogleCloudPlatform/microservices-demo), deployed on OpenShift.
+Based on [mostmark's fork of the Online Boutique microservices demo](https://github.com/mostmark/microservices-demo), deployed on OpenShift.
 
 ## Prerequisites
 
 ### Tools Required
 - **roxctl** - Red Hat Advanced Cluster Security CLI
   ```bash
-  # Download from your RHACS Central instance
-  # Or: brew install roxctl
+  # Option 1: Download from your RHACS Central instance
+  # Navigate to: Platform Configuration > Integrations > StackRox API Token
+  # Download roxctl for your platform
+  
+  # Option 2: Build from source
+  # https://github.com/stackrox/stackrox
   ```
 - **xdot** - GraphViz DOT file viewer
   ```bash
@@ -223,8 +227,9 @@ brew install --cask xquartz
 
 ## Contributing
 
-This is a personal demo environment. For the original microservices demo, see:
-https://github.com/GoogleCloudPlatform/microservices-demo
+This is a personal demo environment. For the microservices demo, see:
+- mostmark's fork: https://github.com/mostmark/microservices-demo
+- Original Google demo: https://github.com/GoogleCloudPlatform/microservices-demo
 
 ## License
 
