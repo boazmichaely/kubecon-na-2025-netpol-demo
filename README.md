@@ -3,6 +3,7 @@
 
 
 This demo is an interactive supplement to the slides. 
+
 https://kccncna2025.sched.com/event/e90814e6c4b2e7a73f590da3f17d68b1 
 
 
@@ -32,10 +33,11 @@ Based on [mostmark's fork of the Online Boutique microservices demo](https://git
 
 ### Tools Required
 - **roxctl** - Red Hat Advanced Cluster Security CLI
-  # Option 1: Download from your RHACS Central instance
+#### Option 1: Download from your RHACS Central instance
   
-  # Option 2: Build from source
-  # https://github.com/stackrox/stackrox
+#### Option 2: Build from source
+
+https://github.com/stackrox/stackrox
 
 - A GraphViz DOT file viewer. There are great VScode plugins. You may also try xdot 
   ```bash
@@ -49,7 +51,7 @@ Based on [mostmark's fork of the Online Boutique microservices demo](https://git
 
 ## Setup Instructions
 
-### 1. Clone Repository
+### 1. Clone this Repository
 ```bash
 git clone https://github.com/boazmichaely/kubecon-na-2025-netpol-demo.git
 cd kubecon-na-2025-netpol-demo
