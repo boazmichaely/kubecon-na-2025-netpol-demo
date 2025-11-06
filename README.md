@@ -1,7 +1,8 @@
-# Kubernetes Network Policy Toolkit Demo using roxctl (based on NP-Guard)
+# Demonstration of Automatic Kubernetes Network Policies
+## KubecCon NA 2025
 
 
-This demo is an interactive supplement to my slides and assumes the slides are open in chrome
+This demo is an interactive supplement to the slides. 
 https://kccncna2025.sched.com/event/e90814e6c4b2e7a73f590da3f17d68b1 
 
 
