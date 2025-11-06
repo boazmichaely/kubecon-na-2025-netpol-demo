@@ -68,7 +68,6 @@ cd microservices-demo
 
 This is a personal demo environment. For the microservices demo, see:
 - mostmark's fork: https://github.com/mostmark/microservices-demo
-- Original Google demo: https://github.com/GoogleCloudPlatform/microservices-demo
 
 ## License
 
