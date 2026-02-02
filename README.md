@@ -55,6 +55,14 @@ cd kubecon-na-2025-netpol-demo
 
 # Clone mostmark's microservices demo
 git clone https://github.com/mostmark/microservices-demo.git
+
+# create the demo in the OCP cluster
+1. login as admin (use OCP UI copy login command) 
+2. run these comands
+% oc whoami --show-context
+% oc new-project ms-demo
+% cd microservices-demo
+% oc apply -f application.yaml
 ```
 
 ## Running the Demo

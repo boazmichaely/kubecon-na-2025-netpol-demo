@@ -12,27 +12,53 @@ WHITE='\033[1;37m'
 HIGHLIGHT='\033[43m\033[30m'   # Yellow background, black text (marker effect)
 NC='\033[0m' # No Color
 
+# OCP Cluster Configuration
+OCP_CLUSTER_URL="do-not-delete-boaz-demo.ocp.infra.rox.systems"
+FRONTEND_URL="https://frontend-ms-demo.apps.${OCP_CLUSTER_URL}"
+
+# Slide deck title (for pop_chrome to find the correct window)
+SLIDES_TITLE="2026-01-03 OpenShift TAMs Demo of roxctl netpol"
+
+# OCP Console tab titles (use middle dot · for unique matching)
+OCP_NETPOL_TAB="NetworkPolicies ·"   # use middle dot · for unique matching
+OCP_ANP_TAB="adminnetworkpolicies"   # no middle dot
+
+# Helper function to open the store frontend
+open_store() {
+    echo -e "${CYAN}Opening store frontend: ${FRONTEND_URL}${NC}"
+    open "$FRONTEND_URL"
+}
+
 # Highlight definitions for different types of output
 HL_SHOW="${BOLD}${YELLOW}"    # Important prompts before roxctl commands
 
 # Helper function to bring Chrome to front
-# Usage: pop_chrome ["window title substring"]
+# Usage: pop_chrome ["tab title substring"]
 pop_chrome() {
     if [ -z "$1" ]; then
         # No window name - just activate Chrome
         osascript -e 'tell application "Google Chrome" to activate'
     else
-        # Activate specific window by title
+        # Search through all tabs in all windows to find matching title
         osascript <<EOF
 tell application "Google Chrome"
     activate
-    set windowList to every window
-    repeat with aWindow in windowList
-        if (title of aWindow) contains "$1" then
-            set index of aWindow to 1
-            set visible of aWindow to true
-            exit repeat
-        end if
+    delay 0.1
+    repeat with w in windows
+        set tabIndex to 0
+        repeat with t in tabs of w
+            set tabIndex to tabIndex + 1
+            if title of t contains "$1" then
+                set active tab index of w to tabIndex
+                set index of w to 1
+                tell application "System Events"
+                    tell process "Google Chrome"
+                        perform action "AXRaise" of window 1
+                    end tell
+                end tell
+                return
+            end if
+        end repeat
     end repeat
 end tell
 EOF
@@ -102,10 +128,61 @@ demo_prompt() {
 # - demo1:
 ## DO show the folder (ls -l)
 # SAY The application is already deployed and is working 
-## DO show the web page https://frontend-ms-demo.apps.boaz-for-ac49.ocp.infra.rox.systems/
+## DO show the web page https://frontend-ms-demo.apps.<OCP Cluster URL> 
 ## DO SHOP for a few seconds
 # SAY let's generate tight network policies for the application
 ## DO 
+
+########################################################
+# Command-line options
+########################################################
+usage() {
+    echo -e "${BOLD}Usage:${NC} ./demo.sh [command]"
+    echo
+    echo -e "${BOLD}Commands:${NC}"
+    echo -e "  ${CYAN}(none)${NC}       Run the full demo step by step (default)"
+    echo -e "  ${CYAN}store${NC}        Open the Online Boutique store frontend in browser"
+    echo -e "  ${CYAN}pop <tab>${NC}    Bring Chrome tab containing <tab> in title to front"
+    echo -e "  ${CYAN}help${NC}         Show this help message"
+    echo
+    echo -e "${BOLD}Configuration:${NC}"
+    echo -e "  OCP Cluster:  ${CYAN}${OCP_CLUSTER_URL}${NC}"
+    echo -e "  Store URL:    ${CYAN}${FRONTEND_URL}${NC}"
+    echo -e "  Slides Title: ${CYAN}${SLIDES_TITLE}${NC}"
+    echo -e "  NetPol Tab:   ${CYAN}${OCP_NETPOL_TAB}${NC}"
+    echo -e "  ANP Tab:      ${CYAN}${OCP_ANP_TAB}${NC}"
+    echo
+}
+
+case "$1" in
+    "")
+        # No arguments - run the demo (continue below)
+        ;;
+    store)
+        open_store
+        exit 0
+        ;;
+    pop)
+        if [ -z "$2" ]; then
+            echo -e "${RED}Error: pop requires a tab name${NC}"
+            echo -e "Usage: ./demo.sh pop <tab>"
+            exit 1
+        fi
+        pop_chrome "$2"
+        exit 0
+        ;;
+    help|-h|--help)
+        usage
+        exit 0
+        ;;
+    *)
+        echo -e "${RED}Unknown command: $1${NC}"
+        echo
+        usage
+        exit 1
+        ;;
+esac
+
 ########################################################
 # Clean up from previous runs
 ########################################################
@@ -146,7 +223,7 @@ less ../NETPOL/network-policies.yaml
 echo
 demo_prompt "show generated  policies in slide ..."
 echo
-pop_chrome "Demonstration of Automatic Kubernetes Network Policies"
+pop_chrome "$SLIDES_TITLE"
 echo
 demo_prompt "Test IP connectivity before applying network policies ..."
 echo
@@ -172,7 +249,7 @@ echo -e "${BOLD}${RED}━━━━━━━━━━━━━━━━━━━�
 echo
 demo_prompt "Show network policies in OCP console ..."
 echo
-pop_chrome "NetworkPolicies"
+pop_chrome "$OCP_NETPOL_TAB"
 read -n 1 -s -p 'Show the app still works :-) '
 pop_chrome "Online Boutique"
 echo
@@ -190,7 +267,7 @@ echo
 
 demo_prompt "on to Use Case 2 ... "
 echo
-pop_chrome "Demonstration of Automatic Kubernetes Network Policies"
+pop_chrome "$SLIDES_TITLE"
 
 clear
 
@@ -209,7 +286,7 @@ echo
 demo_launch oc apply -f ../NETPOL/ANP-add-monitoring-with-ports-to-all-NS.yaml
 demo_prompt "See ANP in OpenShift Console"
 echo
-pop_chrome "adminnetworkpolicies"
+pop_chrome "$OCP_ANP_TAB"
 demo_prompt "======  Step 3: Analyze exposure with focus on frontend ======"
 echo
 echo
@@ -232,7 +309,7 @@ echo
 
 demo_prompt "on to Use Case 3 ... "
 echo
-pop_chrome "Demonstration of Automatic Kubernetes Network Policies"
+pop_chrome "$SLIDES_TITLE"
 
 clear
 cat <<EOF
@@ -248,12 +325,12 @@ echo
 demo_prompt "Show connectivity explanation ... "
 less -S ../DOT/explain.txt
 echo
-demo_prompt "With a littel help from Cursor (CMD ^ V) "
+demo_prompt "With a littel help from Cursor (SHIFT CMD  V) "
 echo
 open ../DOT/05-frontend-connectivity-summary.md
 echo
 demo_prompt "Back to slides ... "
-pop_chrome "Google Slides"
+pop_chrome "$SLIDES_TITLE"
 echo
 demo_prompt "End of Demo 3 ... "
 echo
