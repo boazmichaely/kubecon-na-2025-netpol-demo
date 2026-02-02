@@ -325,7 +325,7 @@ echo
 demo_prompt "Show connectivity explanation ... "
 less -S ../DOT/explain.txt
 echo
-demo_prompt "With a littel help from Cursor (SHIFT CMD  V) "
+demo_prompt "With a littel help from Cursor (SHIFT CMD V) "
 echo
 open ../DOT/05-frontend-connectivity-summary.md
 echo

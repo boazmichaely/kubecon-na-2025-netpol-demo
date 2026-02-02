@@ -48,7 +48,7 @@ Based on [mostmark's fork of the Online Boutique microservices demo](https://git
 
 ## Setup Instructions
 
-### 1. Clone this Repository
+### 1. Prepare the Shop
 ```bash
 git clone https://github.com/boazmichaely/kubecon-na-2025-netpol-demo.git
 cd kubecon-na-2025-netpol-demo
@@ -64,6 +64,11 @@ git clone https://github.com/mostmark/microservices-demo.git
 % cd microservices-demo
 % oc apply -f application.yaml
 ```
+
+### 2. open Chrome windows that would be used during the demo
+1. The slide deck (update the slide deck title in demo.sh setting)
+2. OCP NetworkPolicies  (e.g. https://console-openshift-console.apps.do-not-delete-boaz-demo.ocp.infra.rox.systems/k8s/ns/ms-demo/networking.k8s.io~v1~NetworkPolicy)
+3. OCP AdminNetworkPolicies (this is in CRD section under Administration e.g. https://console-openshift-console.apps.do-not-delete-boaz-demo.ocp.infra.rox.systems/k8s/cluster/customresourcedefinitions/adminnetworkpolicies.policy.networking.k8s.io)
 
 ## Running the Demo
 
