@@ -20,13 +20,23 @@ FRONTEND_URL="https://frontend-ms-demo.apps.${OCP_CLUSTER_URL}"
 SLIDES_TITLE="2026-01-03 OpenShift TAMs Demo of roxctl netpol"
 
 # OCP Console tab titles (use middle dot · for unique matching)
-OCP_NETPOL_TAB="NetworkPolicies ·"   # use middle dot · for unique matching
-OCP_ANP_TAB="adminnetworkpolicies"   # no middle dot
+OCP_NETPOL_TAB="NetworkPolicies ·" # use middle dot · for unique matching
+OCP_ANP_TAB="adminnetworkpolicies" # 
+
+# Default folder to open in VSCode
+VSCODE_DEFAULT_FOLDER="./kubernetes-manifests"
 
 # Helper function to open the store frontend
 open_store() {
     echo -e "${CYAN}Opening store frontend: ${FRONTEND_URL}${NC}"
     open "$FRONTEND_URL"
+}
+
+# Helper function to open a folder in VSCode
+# Usage: pop_vscode [folder]  (defaults to VSCODE_DEFAULT_FOLDER)
+pop_vscode() {
+    local folder="${1:-$VSCODE_DEFAULT_FOLDER}"
+    open -a "Visual Studio Code" "$folder"
 }
 
 # Highlight definitions for different types of output
@@ -140,17 +150,19 @@ usage() {
     echo -e "${BOLD}Usage:${NC} ./demo.sh [command]"
     echo
     echo -e "${BOLD}Commands:${NC}"
-    echo -e "  ${CYAN}(none)${NC}       Run the full demo step by step (default)"
-    echo -e "  ${CYAN}store${NC}        Open the Online Boutique store frontend in browser"
-    echo -e "  ${CYAN}pop <tab>${NC}    Bring Chrome tab containing <tab> in title to front"
-    echo -e "  ${CYAN}help${NC}         Show this help message"
+    echo -e "  ${CYAN}(none)${NC}           Run the full demo step by step (default)"
+    echo -e "  ${CYAN}store${NC}            Open the Online Boutique store frontend in browser"
+    echo -e "  ${CYAN}pop <tab>${NC}        Bring Chrome tab containing <tab> in title to front"
+    echo -e "  ${CYAN}vscode [folder]${NC}  Open folder in VSCode (default: ${VSCODE_DEFAULT_FOLDER})"
+    echo -e "  ${CYAN}help${NC}             Show this help message"
     echo
     echo -e "${BOLD}Configuration:${NC}"
-    echo -e "  OCP Cluster:  ${CYAN}${OCP_CLUSTER_URL}${NC}"
-    echo -e "  Store URL:    ${CYAN}${FRONTEND_URL}${NC}"
-    echo -e "  Slides Title: ${CYAN}${SLIDES_TITLE}${NC}"
-    echo -e "  NetPol Tab:   ${CYAN}${OCP_NETPOL_TAB}${NC}"
-    echo -e "  ANP Tab:      ${CYAN}${OCP_ANP_TAB}${NC}"
+    echo -e "  OCP Cluster:    ${CYAN}${OCP_CLUSTER_URL}${NC}"
+    echo -e "  Store URL:      ${CYAN}${FRONTEND_URL}${NC}"
+    echo -e "  Slides Title:   ${CYAN}${SLIDES_TITLE}${NC}"
+    echo -e "  NetPol Tab:     ${CYAN}${OCP_NETPOL_TAB}${NC}"
+    echo -e "  ANP Tab:        ${CYAN}${OCP_ANP_TAB}${NC}"
+    echo -e "  VSCode Folder:  ${CYAN}${VSCODE_DEFAULT_FOLDER}${NC}"
     echo
 }
 
@@ -169,6 +181,10 @@ case "$1" in
             exit 1
         fi
         pop_chrome "$2"
+        exit 0
+        ;;
+    vscode)
+        pop_vscode "$2"
         exit 0
         ;;
     help|-h|--help)
@@ -206,6 +222,9 @@ cat <<EOF
 EOF
 demo_prompt "Show the Online Boutique application ..."
 pop_chrome "Online Boutique"
+
+demo_prompt "Show the YAML Resources ... "
+pop_vscode
 
 echo
 demo_prompt "======  Step 1: Generate network policies ! ======"
@@ -325,9 +344,9 @@ echo
 demo_prompt "Show connectivity explanation ... "
 less -S ../DOT/explain.txt
 echo
-demo_prompt "With a littel help from Cursor (SHIFT CMD V) "
+demo_prompt "With a little formatting help from AI (SHIFT CMD V) "
 echo
-open ../DOT/05-frontend-connectivity-summary.md
+open -a "Visual Studio Code" ../DOT/05-frontend-connectivity-summary.md
 echo
 demo_prompt "Back to slides ... "
 pop_chrome "$SLIDES_TITLE"

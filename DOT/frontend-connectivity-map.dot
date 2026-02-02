@@ -1,0 +1,36 @@
+digraph {
+	subgraph "cluster_default" {
+		color="black"
+		fontcolor="black"
+		"default/adservice[Deployment]" [label="adservice[Deployment]" color="blue" fontcolor="blue"]
+		"default/cartservice[Deployment]" [label="cartservice[Deployment]" color="blue" fontcolor="blue"]
+		"default/checkoutservice[Deployment]" [label="checkoutservice[Deployment]" color="blue" fontcolor="blue"]
+		"default/currencyservice[Deployment]" [label="currencyservice[Deployment]" color="blue" fontcolor="blue"]
+		"default/frontend[Deployment]" [label="frontend[Deployment]" color="blue" fontcolor="blue"]
+		"default/loadgenerator[Deployment]" [label="loadgenerator[Deployment]" color="blue" fontcolor="blue"]
+		"default/productcatalogservice[Deployment]" [label="productcatalogservice[Deployment]" color="blue" fontcolor="blue"]
+		"default/recommendationservice[Deployment]" [label="recommendationservice[Deployment]" color="blue" fontcolor="blue"]
+		"default/shippingservice[Deployment]" [label="shippingservice[Deployment]" color="blue" fontcolor="blue"]
+		label="default"
+	}
+	subgraph "cluster_openshift_monitoring" {
+		color="red2"
+		fontcolor="red2"
+		"all pods_in_openshift-monitoring" [label="all pods" color="red2" fontcolor="red2"]
+		label="openshift-monitoring"
+	}
+	"entire-cluster" [label="entire-cluster" color="red2" fontcolor="red2" shape=diamond]
+	"{ingress-controller}" [label="{ingress-controller}" color="blue" fontcolor="blue"]
+	"all pods_in_openshift-monitoring" -> "default/frontend[Deployment]" [label="TCP 8080,8443,9090" color="#FF0000" fontcolor="darkgreen" weight=2.0 style=dashed]
+	"default/frontend[Deployment]" -> "default/adservice[Deployment]" [label="TCP 9555" color="#00FF00" fontcolor="darkgreen" weight=1]
+	"default/frontend[Deployment]" -> "default/cartservice[Deployment]" [label="TCP 7070" color="#00FF00" fontcolor="darkgreen" weight=1]
+	"default/frontend[Deployment]" -> "default/checkoutservice[Deployment]" [label="TCP 5050" color="#00FF00" fontcolor="darkgreen" weight=1]
+	"default/frontend[Deployment]" -> "default/currencyservice[Deployment]" [label="TCP 7000" color="#00FF00" fontcolor="darkgreen" weight=1]
+	"default/frontend[Deployment]" -> "default/productcatalogservice[Deployment]" [label="TCP 3550" color="#00FF00" fontcolor="darkgreen" weight=0.5]
+	"default/frontend[Deployment]" -> "default/recommendationservice[Deployment]" [label="TCP 8080" color="#00FF00" fontcolor="darkgreen" weight=0.5]
+	"default/frontend[Deployment]" -> "default/shippingservice[Deployment]" [label="TCP 50051" color="#00FF00" fontcolor="darkgreen" weight=0.5]
+	"default/frontend[Deployment]" -> "entire-cluster" [label="UDP 5353" color="blue" fontcolor="blue" weight=2.0 style=dashed]
+	"default/loadgenerator[Deployment]" -> "default/frontend[Deployment]" [label="TCP 8080" color="#00FF00" fontcolor="darkgreen" weight=1]
+	"entire-cluster" -> "default/frontend[Deployment]" [label="TCP 8080" color="red" fontcolor="red" weight=2.0 style=dashed]
+	"{ingress-controller}" -> "default/frontend[Deployment]" [label="TCP 8080" color="#00FF00" fontcolor="darkgreen" weight=1.5]
+}
