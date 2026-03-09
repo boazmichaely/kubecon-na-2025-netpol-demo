@@ -74,8 +74,9 @@ git clone https://github.com/mostmark/microservices-demo.git
 
 ```bash
 cd microservices-demo
-../demo.sh
+../demo.sh run
 ```
+(With no arguments, `../demo.sh` shows help.)
 
 ## Contributing
 
